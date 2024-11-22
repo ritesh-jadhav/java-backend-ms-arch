@@ -1,6 +1,7 @@
 package com.msarch.OrderService.service;
 
 import com.msarch.OrderService.entity.Order;
+import com.msarch.OrderService.external.client.ProductService;
 import com.msarch.OrderService.modal.OrderRequest;
 import com.msarch.OrderService.repository.OrderRepoistory;
 import lombok.extern.log4j.Log4j2;
@@ -16,11 +17,22 @@ public class orderServiceImpl implements  IOrderService{
     @Autowired
     private OrderRepoistory orderRepoistory;
 
+    @Autowired
+    private ProductService productService;
+
 
     @Override
     public long placeOrder(OrderRequest orderRequest) {
         //order entity -> to save the order with status created
-        log.info("creating order");
+        // Product service -> Block product service to reduce quantity
+        // Payment service ->  Payments -> SUCCESS -> COMPLETED else -> CANCELLED
+
+        log.info("Placing order {} ",orderRequest);
+
+        productService.reduceQuantity(orderRequest.getProductId(),orderRequest.getQuantity());
+
+        log.info("Creating order with status created");
+
         Order order = Order.builder()
                 .orderDate(orderRequest.getOrderDate())
                 .orderStatus(orderRequest.getOrderStatus())
@@ -32,11 +44,6 @@ public class orderServiceImpl implements  IOrderService{
                 .build();
             orderRepoistory.save(order);
         log.info("order created with id : {}",order.getOrderId());
-            // Product service -> Block product service to reduce quantity
-
-
-
-            // Payment service ->  Payments -> SUCCESS -> COMPLETED else -> CANCELLED
 
         return  order.getOrderId();
     }
