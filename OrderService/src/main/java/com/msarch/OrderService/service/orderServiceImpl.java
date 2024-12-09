@@ -1,7 +1,9 @@
 package com.msarch.OrderService.service;
 
 import com.msarch.OrderService.entity.Order;
+import com.msarch.OrderService.external.client.PaymentService;
 import com.msarch.OrderService.external.client.ProductService;
+import com.msarch.OrderService.external.request.PaymentRequest;
 import com.msarch.OrderService.modal.OrderRequest;
 import com.msarch.OrderService.repository.OrderRepoistory;
 import lombok.extern.log4j.Log4j2;
@@ -20,6 +22,8 @@ public class orderServiceImpl implements  IOrderService{
     @Autowired
     private ProductService productService;
 
+    @Autowired
+    private PaymentService paymentService;
 
     @Override
     public long placeOrder(OrderRequest orderRequest) {
@@ -45,6 +49,27 @@ public class orderServiceImpl implements  IOrderService{
             orderRepoistory.save(order);
         log.info("order created with id : {}",order.getOrderId());
 
+        log.info("Calling payment service to complete the payment");
+
+        PaymentRequest paymentRequest = PaymentRequest.builder()
+                .orderId(order.getOrderId())
+                .paymentMode(orderRequest.getPaymentMode())
+                .amount(orderRequest.getAmount())
+                .build();
+
+        String orderStatus = null;
+
+        try{
+            paymentService.doPayment(paymentRequest);
+            log.info("Payment successful Changing order status to ORDER_PLACED");
+            orderStatus = "PLACED";
+        }catch (Exception e){
+            log.info("Error occurred in the PAYMENT-SERVICE changing status to PAYMENT_FAILED");
+            orderStatus = "PAYMENT_FAILED";
+        }
+
+        order.setOrderStatus(orderStatus);
+        orderRepoistory.save(order);
         return  order.getOrderId();
     }
 }
