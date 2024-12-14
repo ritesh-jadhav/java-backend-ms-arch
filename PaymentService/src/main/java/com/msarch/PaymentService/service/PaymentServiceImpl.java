@@ -1,7 +1,9 @@
 package com.msarch.PaymentService.service;
 
 import com.msarch.PaymentService.entity.TransactionDetails;
+import com.msarch.PaymentService.modal.PaymentMode;
 import com.msarch.PaymentService.modal.PaymentRequest;
+import com.msarch.PaymentService.modal.PaymentResponse;
 import com.msarch.PaymentService.repo.TransactionRepo;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,5 +43,20 @@ public class PaymentServiceImpl implements IPaymentService {
         log.info("Transaction done with id :: {}", transactionDetails.getId());
 //              System.out.println("Transaction done with id :: {}"+transactionDetails.getId());
         return transactionDetails.getId();
+    }
+
+    @Override
+    public PaymentResponse getPaymentDetailsByOrderId(String orderId) {
+        log.info("Getting Payment Details for order id :: {}",orderId);
+        TransactionDetails transactionDetails = transactionRepo.findByOrderId(Long.valueOf(orderId));
+        PaymentResponse paymentResponse = PaymentResponse.builder()
+                .paymentId(transactionDetails.getId())
+                .paymentDate(transactionDetails.getPaymentDate())
+                .orderID(transactionDetails.getOrderId())
+                .paymentMode(PaymentMode.valueOf(transactionDetails.getPaymentMode()))
+                .amount(transactionDetails.getAmount())
+                .status(transactionDetails.getPaymentStatus())
+                .build();
+        return paymentResponse;
     }
 }
