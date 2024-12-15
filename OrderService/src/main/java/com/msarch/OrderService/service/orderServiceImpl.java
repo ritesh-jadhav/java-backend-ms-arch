@@ -5,8 +5,10 @@ import com.msarch.OrderService.exception.CustomException;
 import com.msarch.OrderService.external.client.PaymentService;
 import com.msarch.OrderService.external.client.ProductService;
 import com.msarch.OrderService.external.request.PaymentRequest;
+import com.msarch.OrderService.external.response.PaymentResponse;
 import com.msarch.OrderService.modal.OrderRequest;
 import com.msarch.OrderService.modal.OrderResponse;
+import com.msarch.OrderService.modal.PaymentMode;
 import com.msarch.OrderService.repository.OrderRepoistory;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,20 +90,36 @@ public class orderServiceImpl implements IOrderService {
         OrderResponse.ProductDetails productResponse = restTemplate.getForObject(
                 "http://PRODUCT-SERVICE/product/" + order.getProductId(),
                 OrderResponse.ProductDetails.class);
+        log.info("Getting payment info from PAYMENT-SERVICE");
+
+        PaymentResponse paymentResponse = restTemplate.getForObject(
+                "http://PAYMENT-SERVICE/payment/order/" + order.getOrderId(),
+                PaymentResponse.class);
+
         OrderResponse.ProductDetails productDetails = OrderResponse.ProductDetails.builder()
                 .productName(productResponse.getProductName())
                 .productId(productResponse.getProductId())
                 .price(productResponse.getPrice())
                 .quantity(productResponse.getQuantity())
                 .build();
+        OrderResponse.PaymentDetails paymentDetails = OrderResponse.PaymentDetails.builder()
+                .paymentDate(paymentResponse.getPaymentDate())
+                .orderID(paymentResponse.getOrderID())
+                .status(paymentResponse.getStatus())
+                .paymentMode(PaymentMode.valueOf(paymentResponse.getPaymentMode().name()))
+                .amount(paymentResponse.getAmount())
+                .paymentId(paymentResponse.getPaymentId())
+                .build();
 
-        OrderResponse response = OrderResponse.builder()
+        OrderResponse orderResponse = OrderResponse.builder()
                 .orderId(order.getOrderId())
                 .amount(order.getAmount())
                 .orderStatus(order.getOrderStatus())
                 .orderDate(order.getOrderDate())
                 .productDetails(productDetails)
+                .paymentDetails(paymentDetails)
                 .build();
-        return response;
+
+        return orderResponse;
     }
 }
