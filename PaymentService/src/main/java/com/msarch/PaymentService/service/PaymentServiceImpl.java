@@ -29,8 +29,6 @@ public class PaymentServiceImpl implements IPaymentService {
 //        transactionDetails.setOrderId(request.getOrderId());
 //        transactionDetails.setPaymentStatus("Success");
 //        transactionDetails.setReferenceNumber(request.getReferenceNumber());
-
-
         TransactionDetails transactionDetails = TransactionDetails.builder()
                 .amount(request.getAmount())
                 .orderId(request.getOrderId())
